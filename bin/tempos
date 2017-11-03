@@ -1,0 +1,64 @@
+#!/usr/bin/env ruby
+
+require 'commander/import'
+require_relative '../lib/tempos/commands'
+
+program :name, "TEMPOS cli"
+program :version, '1.0.0'
+program :description, "time tracking done wrong"
+
+command :which do |c|
+  c.description = "Display current project"
+
+  c.action do
+    Tempos::Commands::ShowCurrentProject.new.run
+  end
+end
+
+command :project do |c|
+  c.description = "Set current project"
+
+  c.action do |(project_identifier)|
+    Tempos::Commands::SetCurrentProject.new.run project_identifier
+  end
+end
+
+command :status do |c|
+  c.syntax = "status"
+  c.description = "Display which projects are started"
+  c.action do |args|
+    puts args
+    Tempos::Commands::Status.new.run
+  end
+end
+
+command :start do |c|
+  c.description = "Start tracking time in the current project"
+  c.action do
+    Tempos::Commands::Start.new.run
+  end
+end
+
+command :stop do |c|
+  c.description = "Stop tracking time in the current project"
+
+  c.action do
+    Tempos::Commands::Stop.new.run
+  end
+end
+
+command :add do |c|
+  c.syntax = "add <duration>"
+
+  c.action do |(duration)|
+    Tempos::Commands::Add.new.run(duration)
+  end
+end
+
+command :remove do |c|
+  c.syntax = "remove <duration>"
+
+  c.action do |(duration)|
+    Tempos::Commands::Remove.new.run(duration)
+  end
+end
