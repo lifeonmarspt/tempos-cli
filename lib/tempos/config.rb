@@ -47,6 +47,12 @@ module Tempos
       File.read(project_file).strip.split("/").last
     end
 
+    def set_current_project  identifier
+      File.open(project_file || File.join(cwd, ".tempos"), "w+") do |file|
+        file.puts identifier
+      end
+    end
+
     def project_identifier
       "#{client}/#{project}"
     end

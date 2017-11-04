@@ -1,4 +1,5 @@
 require 'shellwords'
+require 'fileutils'
 
 module Tempos
   class Git < Struct.new(:root)
@@ -26,7 +27,6 @@ module Tempos
   end
 end
 
-
 module Tempos
   class AlreadyStarted < StandardError
   end
@@ -34,13 +34,32 @@ module Tempos
   class NotStarted < StandardError
   end
 
+  class Repository
+    attr_accessor :root
+
+    def initialize opts = {}
+      self.root = opts[:root] || ENV["TEMPOS_ROOT"]
+    end
+
+    def projects
+      Dir[File.join(root, "*", "*")].map do |path|
+        path.split("/").last(2).join("/")
+      end
+    end
+
+    def members project_identifier
+      Dir[File.join(root, project_identifier, "*@*")].map do |path|
+        path.split("/").last
+      end
+    end
+  end
+
   class Project
-    attr_accessor :client, :project, :username
+    attr_accessor :identifier, :username
     attr_accessor :root, :git
 
-    def initialize client, project, username, opts = {}
-      self.client = client
-      self.project = project
+    def initialize identifier, username, opts = {}
+      self.identifier = identifier
       self.username = username
 
       self.root = opts[:root] || ENV["TEMPOS_ROOT"]
@@ -49,7 +68,7 @@ module Tempos
     end
 
     def filepath
-      "#{root}/#{client}/#{project}/#{username}"
+      File.join(root, identifier, username)
     end
 
     def status
