@@ -3,6 +3,15 @@
 require 'thor'
 require_relative '../lib/tempos/commands'
 
+class ReportCLI < Thor
+  desc "show", "Show current project report"
+  def show
+    Tempos::Commands::Report.new(options).run
+  end
+
+  default_task :show
+end
+
 class TemposCLI < Thor
   class_option :member, default: nil, required: false
   class_option :project, default: nil, required: false
@@ -44,6 +53,36 @@ class TemposCLI < Thor
   def remove(duration)
     Tempos::Commands::Remove.new(options).run(duration)
   end
+
+  desc "set-budget AMOUNT CURRENCY", "Set current project budget"
+  def set_budget(amount, currency)
+    Tempos::Commands::SetBudget.new(options).run(amount, currency)
+  end
+
+  desc "set-deadline DEADLINE", "Set current project deadline"
+  def set_deadline(deadline)
+    Tempos::Commands::SetDeadline.new(options).run(deadline)
+  end
+
+  desc "set-rate AMOUNT CURRENCY", "Set current project rate"
+  def set_rate(amount, currency, member=nil)
+    Tempos::Commands::SetRate.new(options).run(amount, currency, member)
+  end
+
+  desc "budget", "Show current project budget"
+  def budget
+    Tempos::Commands::Budget.new(options).run
+  end
+
+  desc "deadline", "Show current project deadline"
+  def deadline
+    Tempos::Commands::Deadline.new(options).run
+  end
+
+  desc "report", "derp"
+  subcommand :report, ReportCLI
+
+  default_task :status
 end
 
 TemposCLI.start(ARGV)

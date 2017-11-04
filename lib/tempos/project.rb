@@ -1,6 +1,9 @@
 require 'shellwords'
 require 'fileutils'
 
+require_relative './plumbing'
+require_relative './version_controlled_plumbing'
+
 module Tempos
   class Git < Struct.new(:root)
     def exec *command
@@ -18,11 +21,16 @@ module Tempos
     def commit message, filename
       exec "commit", "-m", message, filename
     end
+
+    def commit_a message
+      exec "commit", "-am", message
+    end
   end
 
-  class NoGit
+  class NoGit < Struct.new(:root)
     def pull; end
     def commit message, filename; end
+    def commit_a message; end
     def push; end
   end
 end
@@ -38,7 +46,7 @@ module Tempos
     attr_accessor :root
 
     def initialize opts = {}
-      self.root = opts[:root] || ENV["TEMPOS_ROOT"]
+      self.root = opts.fetch(:root) { ENV["TEMPOS_ROOT"] }
     end
 
     def projects
@@ -55,71 +63,80 @@ module Tempos
   end
 
   class Project
-    attr_accessor :identifier, :username
-    attr_accessor :root, :git
+    attr_accessor :plumbing, :identifier, :username
 
     def initialize identifier, username, opts = {}
+      self.plumbing = VersionControlledPlumbing.new(Plumbing.new(opts), NoGit.new)
       self.identifier = identifier
       self.username = username
-
-      self.root = opts[:root] || ENV["TEMPOS_ROOT"]
-
-      self.git = opts.fetch(:git, false) ? Git.new(root) : NoGit.new
-    end
-
-    def filepath
-      File.join(root, identifier, username)
     end
 
     def status
-      git.pull
-
-      (File.readlines(filepath) rescue []).
-        reject { |line| line.start_with? "#" }.
-        reject { |line| line.strip.empty? }.
-        map { |line| line.split(/\s+/) }.
-
+      self.plumbing.user_entries(identifier, username).
         select { |line| ["start", "stop"].include? line[2] }.
-        #map { |line| line[3] ? [line[3], *line[1...-1]] : line }.
-        sort_by { |line| line[0].to_i }.
         map { |line| line[2] }.
         last
     end
 
-    def add_entry timestamp, timezone, command
-      git.pull
+    def budget
+      self.plumbing.metadata_entries(identifier).
+        select { |line| ["set-budget", "add-budget"].include? line[2] }.
+        reduce([0, nil]) { |(budget, currency), line|
+          if line[2] == "set-budget"
+            [Integer(line[3]), line[4]]
+          elsif line[2] == "add-budget" && currency == line[4]
+            [budget + Integer(line[3]), currency]
+          else
+            raise
+          end
+        }
+    end
 
-      FileUtils.mkdir_p(File.dirname(filepath))
-      File.open(filepath, "a") do |file|
-        file.puts "#{timestamp} #{timezone} #{command}"
-      end
-
-      git.commit command, filepath
-      git.push
+    def deadline
+      self.plumbing.metadata_entries(identifier).
+        select { |line| ["set-deadline"].include? line[2] }.
+        map { |line| Integer(line[3]) }.
+        last
     end
 
     def start timestamp, timezone
-      if status == "start"
-        raise AlreadyStarted
-      end
+      raise AlreadyStarted if status == "start"
 
-      add_entry timestamp, timezone, "start"
+      self.plumbing.add_user_entry identifier, username, timestamp, timezone, "start"
     end
 
     def stop timestamp, timezone
-      if status == "stop"
-        raise NotStarted
-      end
+      raise NotStarted if status == "stop"
 
-      add_entry timestamp, timezone, "stop"
+      self.plumbing.add_user_entry identifier, username, timestamp, timezone, "stop"
     end
 
     def add timestamp, timezone, duration
-      add_entry timestamp, timezone, "add #{duration}"
+      self.plumbing.add_user_entry identifier, username, timestamp, timezone, "add #{duration}"
     end
 
     def remove timestamp, timezone, duration
-      add_entry timestamp, timezone, "remove #{duration}"
+      self.plumbing.add_user_entry identifier, username, timestamp, timezone, "remove #{duration}"
+    end
+
+    def set_budget timestamp, timezone, amount, currency
+      self.plumbing.add_metadata_entry identifier, timestamp, timezone, "set-budget #{amount} #{currency}"
+    end
+
+    def add_budget timestamp, timezone, amount, currency
+      self.plumbing.add_metadata_entry identifier, timestamp, timezone, "set-budget #{amount} #{currency}"
+    end
+
+    def set_deadline timestamp, timezone, deadline
+      self.plumbing.add_metadata_entry identifier, timestamp, timezone, "set-deadline #{deadline}"
+    end
+
+    def set_rate timestamp, timezone, amount, currency, member
+      if entry
+        self.plumbing.add_metadata_entry identifier, timestamp, timezone, "set-rate #{amount} #{currency}"
+      else
+        self.plumbing.add_metadata_entry identifier, timestamp, timezone, "set-rate #{amount} #{currency} #{member}"
+      end
     end
   end
 end

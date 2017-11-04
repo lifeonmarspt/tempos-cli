@@ -1,7 +1,9 @@
 require 'chronic_duration'
+require 'tzinfo'
 
 require_relative '../tempos/config'
 require_relative '../tempos/project'
+require_relative '../tempos/currency'
 
 module Tempos
   module Commands
@@ -49,6 +51,9 @@ module Tempos
       rescue ChronicDuration::DurationParseError
         $stderr.puts "unable to parse duration"
         exit 1
+      rescue Tempos::Currency::Invalid
+        $stderr.puts "unable to set budget: invalid currency"
+        exit 1
       end
     end
 
@@ -89,7 +94,6 @@ module Tempos
     class SetCurrentProject < Command
       def run2 identifier
         config.set_current_project identifier
-        puts identifier
       end
     end
 
@@ -98,13 +102,58 @@ module Tempos
         repository.
           projects.
           flat_map { |identifier| repository.members(identifier).map { |member| [identifier, member] } }.
-          select { |(identifier, member)| options[:'all-users'] || member == username }.
-          select { |(identifier, member)| options[:'all-projects'] || identifier == project_identifier }.
           map { |(identifier, member)| Tempos::Project.new(identifier, member) }.
+          select { |project| options[:'all-users'] || username == project.username }.
+          select { |project| options[:'all-projects'] || project_identifier == project.identifier }.
           select { |project| project.status == "start" }.
-          map { |project| "#{project.identifier} #{project.username} started\n" }.
-          join.
-          tap { |lines| $stdout.write lines }
+          map { |project| "#{project.identifier} #{project.username} started" }.
+          each { |line| puts line }
+      end
+    end
+
+    class SetBudget < Command
+      def run2(amount, currency)
+        amount = Integer(amount)
+        currency = Tempos::Currency.normalize currency
+
+        raise if currency != project.budget[1]
+
+        project.set_budget(Time.now.utc.to_i, timezone, amount, currency)
+      end
+    end
+
+    class SetDeadline < Command
+      def run2(deadline)
+        deadline = TZInfo::Timezone.new(timezone).local_to_utc(Date.parse(deadline).to_time).to_i
+
+        project.set_deadline(Time.now.utc.to_i, timezone, deadline)
+      end
+    end
+
+    class SetRate < Command
+      def run2(amount, currency, member)
+        amount = Integer(amount)
+        currency = Tempos::Currency.normalize currency
+
+        project.set_rate(Time.now.utc.to_i, timezone, amount, currency, member)
+      end
+    end
+
+    class Budget < Command
+      def run2
+        puts project.budget.join(" ")
+      end
+    end
+
+    class Deadline < Command
+      def run2
+        puts Time.at(project.deadline).strftime("%Y-%m-%d")
+      end
+    end
+
+    class Report < Command
+      def run2
+        puts project
       end
     end
   end

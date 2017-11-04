@@ -19,6 +19,7 @@ module Tempos
   end
 
   class Config
+    FILENAME = ".tempos"
     attr_accessor :cwd, :project_file
 
     def initialize cwd = nil
@@ -30,7 +31,7 @@ module Tempos
     def find_project_file
       DirectoryTraversal.new.
         traverse(cwd).lazy.
-        map { |directory| File.join directory, ".tempos" }.
+        map { |directory| File.join directory, FILENAME }.
         select { |directory| File.exists? directory }.
         first
     end
@@ -48,7 +49,7 @@ module Tempos
     end
 
     def set_current_project  identifier
-      File.open(project_file || File.join(cwd, ".tempos"), "w+") do |file|
+      File.open(project_file || File.join(cwd, FILENAME), "w+") do |file|
         file.puts identifier
       end
     end
