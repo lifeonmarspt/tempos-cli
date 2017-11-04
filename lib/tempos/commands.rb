@@ -14,7 +14,7 @@ module Tempos
       end
 
       def project_identifier
-        options.fetch(:project) { config.project }
+        options.fetch(:project) { config.project_identifier }
       end
 
       def username
