@@ -89,7 +89,7 @@ class TemposCLI < Thor
     Tempos::Commands::Invoice.new(options).run
   end
 
-  desc "report", "derp"
+  desc "report", "Show current project report"
   subcommand :report, ReportCLI
 
   default_task :status
