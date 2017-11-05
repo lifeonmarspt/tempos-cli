@@ -17,6 +17,11 @@ class TemposCLI < Thor
   class_option :project, default: nil, required: false
   class_option :timezone, default: nil, required: false
 
+  desc "config", "Show current configuration"
+  def config
+    Tempos::Commands::ShowConfiguration.new(options).run
+  end
+
   desc "which", "Display current project"
   def which
     Tempos::Commands::ShowCurrentProject.new.run

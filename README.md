@@ -3,6 +3,7 @@
 Commands:
   tempos add DURATION                # Add DURATION to the current project
   tempos budget                      # Show current project budget
+  tempos config                      # Show current configuration
   tempos deadline                    # Show current project deadline
   tempos help [COMMAND]              # Describe available commands or one specific command
   tempos invoice                     # Indicate that an invoice has been emitted

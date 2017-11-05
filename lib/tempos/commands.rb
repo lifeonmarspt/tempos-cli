@@ -90,6 +90,14 @@ module Tempos
       end
     end
 
+    class ShowConfiguration < Command
+      def run2
+        puts "root: #{plumbing.root}"
+        puts "username: #{username}"
+        puts "timezone: #{timezone}"
+      end
+    end
+
     class ShowCurrentProject < Command
       def run2
         puts config.project_identifier
