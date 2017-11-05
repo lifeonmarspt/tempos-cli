@@ -8,16 +8,22 @@ require_relative '../tempos/plumbing'
 require_relative '../tempos/reducer'
 
 require_relative '../tempos/support/object_as'
+require_relative '../tempos/support/git'
 
 module Tempos
   module Commands
     class Command
-      attr_accessor :config, :options, :plumbing
+      attr_accessor :config, :options, :plumbing, :git
 
       def initialize options = {}
         self.options = options
         self.config = Tempos::Config.new
         self.plumbing = Tempos::Plumbing.new
+        self.git = Tempos::Support::Git.new(root)
+      end
+
+      def root
+        plumbing.root
       end
 
       def project_identifier
@@ -43,7 +49,15 @@ module Tempos
       def run *args
         ChronicDuration.raise_exceptions = true
 
+        git.pull
+
         run2 *args
+
+        if git.dirty?
+          git.add "."
+          git.commit "bin/tempos #{ARGV.join(" ")}"
+          git.push
+        end
       rescue Tempos::ProjectDefinitionFileNotFound
         $stderr.puts "unable to detect current project: no .tempos file found"
         exit 1

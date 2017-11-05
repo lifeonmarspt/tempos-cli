@@ -1,31 +1,37 @@
+require 'shellwords'
+
 module Tempos
   module Support
     class Git < Struct.new(:root)
       def exec *command
-        system "git", "--quiet", "-C", root, *command
+        `#{["git", "-C", root, *command].map { |arg| Shellwords.escape(arg) }.join(" ")}`
       end
 
       def pull
-        exec "pull"
+        exec "pull", "--quiet"
       end
 
       def push
         exec "push"
       end
 
-      def commit message, filename
-        exec "commit", "-m", message, filename
+      def commit message
+        exec "commit", "-m", message
       end
 
-      def commit_a message
-        exec "commit", "-am", message
+      def add pathspec
+        exec "add", pathspec
+      end
+
+      def dirty?
+        !exec("status", "--porcelain").empty?
       end
     end
 
     class NoGit < Struct.new(:root)
       def pull; end
-      def commit message, filename; end
-      def commit_a message; end
+      def commit message; end
+      def add pathspec; end
       def push; end
     end
   end
