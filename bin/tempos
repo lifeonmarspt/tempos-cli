@@ -22,6 +22,11 @@ class TemposCLI < Thor
     Tempos::Commands::ShowCurrentProject.new.run
   end
 
+  desc "projects", "List existing projects"
+  def projects
+    Tempos::Commands::Projects.new.run
+  end
+
   desc "project IDENTIFIER", "Set current project"
   def project(identifier)
     Tempos::Commands::SetCurrentProject.new.run identifier
@@ -77,6 +82,11 @@ class TemposCLI < Thor
   desc "deadline", "Show current project deadline"
   def deadline
     Tempos::Commands::Deadline.new(options).run
+  end
+
+  desc "invoice", "Indicate that an invoice has been emitted"
+  def invoice
+    Tempos::Commands::Invoice.new(options).run
   end
 
   desc "report", "derp"

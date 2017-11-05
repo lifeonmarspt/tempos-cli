@@ -4,15 +4,20 @@ require 'tzinfo'
 require_relative '../tempos/config'
 require_relative '../tempos/project'
 require_relative '../tempos/currency'
+require_relative '../tempos/plumbing'
+require_relative '../tempos/reducer'
+
+require_relative '../tempos/support/object_as'
 
 module Tempos
   module Commands
     class Command
-      attr_accessor :config, :options
+      attr_accessor :config, :options, :plumbing
 
       def initialize options = {}
         self.options = options
         self.config = Tempos::Config.new
+        self.plumbing = Tempos::Plumbing.new
       end
 
       def project_identifier
@@ -28,11 +33,11 @@ module Tempos
       end
 
       def project
-        Tempos::Project.new project_identifier, username
+        Tempos::Project.new project_identifier, username, plumbing
       end
 
-      def repository
-        Tempos::Repository.new
+      def timestamp
+        Time.now.utc.to_i
       end
 
       def run *args
@@ -59,13 +64,13 @@ module Tempos
 
     class Start < Command
       def run2
-        project.start(Time.now.utc.to_i, timezone)
+        project.start(timestamp, timezone)
       end
     end
 
     class Stop < Command
       def run2
-        project.stop(Time.now.utc.to_i, timezone)
+        project.stop(timestamp, timezone)
       end
     end
 
@@ -73,7 +78,7 @@ module Tempos
       def run2 duration
         duration = ChronicDuration.parse(duration)
 
-        project.add(Time.now.utc.to_i, timezone, duration)
+        project.add(timestamp, timezone, duration)
       end
     end
 
@@ -81,13 +86,19 @@ module Tempos
       def run2 duration
         duration = ChronicDuration.parse(duration)
 
-        project.remove(Time.now.utc.to_i, timezone, duration)
+        project.remove(timestamp, timezone, duration)
       end
     end
 
     class ShowCurrentProject < Command
       def run2
         puts config.project_identifier
+      end
+    end
+
+    class Projects < Command
+      def run2
+        puts plumbing.projects
       end
     end
 
@@ -99,14 +110,13 @@ module Tempos
 
     class Status < Command
       def run2
-        repository.
+        plumbing.
           projects.
-          flat_map { |identifier| repository.members(identifier).map { |member| [identifier, member] } }.
-          map { |(identifier, member)| Tempos::Project.new(identifier, member) }.
-          select { |project| options[:'all-users'] || username == project.username }.
-          select { |project| options[:'all-projects'] || project_identifier == project.identifier }.
-          select { |project| project.status == "start" }.
-          map { |project| "#{project.identifier} #{project.username} started" }.
+          map { |identifier| Tempos::Reducer.new(plumbing).reduce(identifier) }.
+          flat_map { |state| state.started.keys.map { |member| [state.identifier, member] } }.
+          select { |(identifier, member)| options[:'all-users'] || username == member }.
+          select { |(identifier, member)| options[:'all-projects'] || project_identifier == identifier }.
+          map { |identifier, member| "#{identifier} #{member} started" }.
           each { |line| puts line }
       end
     end
@@ -118,7 +128,7 @@ module Tempos
 
         raise if currency != project.budget[1]
 
-        project.set_budget(Time.now.utc.to_i, timezone, amount, currency)
+        project.set_budget(timestamp, timezone, amount, currency)
       end
     end
 
@@ -126,7 +136,7 @@ module Tempos
       def run2(deadline)
         deadline = TZInfo::Timezone.new(timezone).local_to_utc(Date.parse(deadline).to_time).to_i
 
-        project.set_deadline(Time.now.utc.to_i, timezone, deadline)
+        project.set_deadline(timestamp, timezone, deadline)
       end
     end
 
@@ -135,25 +145,40 @@ module Tempos
         amount = Integer(amount)
         currency = Tempos::Currency.normalize currency
 
-        project.set_rate(Time.now.utc.to_i, timezone, amount, currency, member)
+        project.set_rate(timestamp, timezone, amount, currency, member)
       end
     end
 
     class Budget < Command
       def run2
-        puts project.budget.join(" ")
+        puts Tempos::Reducer.new(plumbing).reduce(project_identifier).budget.join(" ")
       end
     end
 
     class Deadline < Command
       def run2
-        puts Time.at(project.deadline).strftime("%Y-%m-%d")
+        puts Time.at(Tempos::Reducer.new(plumbing).reduce(project_identifier).deadline).strftime("%Y-%m-%d")
+      end
+    end
+
+    class Invoice < Command
+      def run2
+        project.invoice(timestamp, timezone)
       end
     end
 
     class Report < Command
       def run2
-        puts project
+        state = Tempos::Reducer.new(plumbing).reduce(project_identifier)
+
+        puts "name:     #{state.identifier}"
+        puts "budget:   #{state.budget.join(" ")}"
+        puts "deadline: #{state.deadline&.as { |d| Time.at(d) }&.strftime("%Y-%m-%d") || "N/A"}"
+
+        puts "cost:"
+        state.times.each do |member, amounts|
+          puts "  #{"#{member}:".ljust(32)} #{amounts.map { |k,v| "#{k[0] * v / 3600}".rjust(6) +" #{k[1]}" }.join(" ")}"
+        end
       end
     end
   end
