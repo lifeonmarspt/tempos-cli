@@ -20,12 +20,32 @@ module Tempos
 
   class Config
     FILENAME = ".tempos"
-    attr_accessor :cwd, :project_file
+    attr_accessor :options, :project_file
 
-    def initialize cwd = nil
-      self.cwd = cwd || Dir.getwd
+    def initialize options
+      self.options = options
 
       self.project_file = find_project_file
+    end
+
+    def cwd
+      options.fetch(:cwd) { Dir.getwd }
+    end
+
+    def root
+      options.fetch(:root) { ENV["TEMPOS_ROOT"] }
+    end
+
+    def project_identifier
+      options.fetch(:project) { default_project_identifier }
+    end
+
+    def username
+      options.fetch(:member) { default_username }
+    end
+
+    def timezone
+      options.fetch(:timezone) { default_timezone }
     end
 
     def find_project_file
@@ -54,15 +74,15 @@ module Tempos
       end
     end
 
-    def project_identifier
+    def default_project_identifier
       "#{client}/#{project}"
     end
 
-    def username
+    def default_username
       `git -C #{Shellwords.escape(cwd)} config user.email`.strip
     end
 
-    def timezone
+    def default_timezone
       File.readlink("/etc/localtime").split("/").last(2).join("/")
     end
   end

@@ -13,29 +13,29 @@ require_relative '../tempos/support/git'
 module Tempos
   module Commands
     class Command
-      attr_accessor :config, :options, :plumbing, :git
+      attr_accessor :options, :config, :plumbing, :git
 
       def initialize options = {}
         self.options = options
-        self.config = Tempos::Config.new
-        self.plumbing = Tempos::Plumbing.new
+        self.config = Tempos::Config.new(options)
+        self.plumbing = Tempos::Plumbing.new(root)
         self.git = Tempos::Support::Git.new(root)
       end
 
       def root
-        plumbing.root
+        config.root
       end
 
       def project_identifier
-        options.fetch(:project) { config.project_identifier }
+        config.project_identifier
       end
 
       def username
-        options.fetch(:member) { config.username }
+        config.username
       end
 
       def timezone
-        options.fetch(:timezone) { config.timezone }
+        config.timezone
       end
 
       def project
@@ -106,9 +106,9 @@ module Tempos
 
     class ShowConfiguration < Command
       def run2
-        puts "root: #{plumbing.root}"
-        puts "username: #{username}"
-        puts "timezone: #{timezone}"
+        puts "root: #{config.root}"
+        puts "username: #{config.username}"
+        puts "timezone: #{config.timezone}"
       end
     end
 

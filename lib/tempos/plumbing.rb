@@ -1,10 +1,5 @@
 module Tempos
-  class Plumbing
-    attr_accessor :root
-    def initialize opts = {}
-      self.root = opts.fetch(:root) { ENV["TEMPOS_ROOT"] }
-    end
-
+  class Plumbing < Struct.new(:root)
     def metadata_entries project
       entries(project, "metadata").
         sort_by { |line| Integer(line[0]) }

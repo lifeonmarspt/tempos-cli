@@ -1,8 +1,7 @@
 require 'shellwords'
 require 'fileutils'
 
-require_relative './plumbing'
-require_relative './version_controlled_plumbing'
+require_relative './reducer'
 
 module Tempos
   class AlreadyStarted < StandardError
@@ -57,7 +56,7 @@ module Tempos
     end
 
     def set_rate timestamp, timezone, amount, currency, member
-      if entry
+      if member
         self.plumbing.add_metadata_entry identifier, timestamp, timezone, "set-rate #{amount} #{currency}"
       else
         self.plumbing.add_metadata_entry identifier, timestamp, timezone, "set-rate #{amount} #{currency} #{member}"
