@@ -30,9 +30,10 @@ module Tempos
 
     class NoGit < Struct.new(:root)
       def pull; end
+      def push; end
       def commit message; end
       def add pathspec; end
-      def push; end
+      def dirty?; false end
     end
   end
 end

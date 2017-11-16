@@ -45,9 +45,12 @@ module Tempos
               ]
             end.
             group_by(&:last).
-            transform_values { |es| es.map(&:first).sum }
+            transform_values { |es| es.map(&:first).sum }.
+            reject { |member, duration| duration == 0 }
           ]
-        end.to_h
+        end.to_h.reject do |key, value|
+          value.values.empty?
+        end
       end
 
       def clamp value, min, max
