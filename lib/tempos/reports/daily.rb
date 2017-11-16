@@ -26,6 +26,8 @@ module Tempos
               report.merge(
                 ranges: report[:ranges] + [[Integer(entry[0]), Integer(entry[0]) - Integer(entry[3]), entry.last]],
               )
+            else
+              report
             end
         end[:ranges].map do |e|
           [Time.at(e[0]), Time.at(e[1]), e[2]]
