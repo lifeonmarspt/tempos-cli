@@ -6,6 +6,7 @@ require_relative '../tempos/project'
 require_relative '../tempos/currency'
 require_relative '../tempos/plumbing'
 require_relative '../tempos/reducer'
+require_relative '../tempos/reports/daily'
 
 require_relative '../tempos/support/object_as'
 require_relative '../tempos/support/git'
@@ -199,7 +200,19 @@ module Tempos
 
         puts "cost:"
         state.times.each do |member, amounts|
-          puts "  #{"#{member}:".ljust(32)} #{amounts.map { |k,v| "#{k[0] * v / 3600}".rjust(6) +" #{k[1]}" }.join(" ")}"
+          puts "  #{"#{member}:".ljust(32)} #{amounts.map { |k,v| "#{(k[0] * v / 3600.0).round(2)}".rjust(6) +" #{k[1]}" }.join(" ")}"
+        end
+      end
+    end
+
+    class DailyReport < Command
+      def run2
+        Tempos::Reports::Daily.new(plumbing).reduce(project_identifier).each do |day, members|
+          puts "#{day}:"
+
+          members.each do |member, amount|
+            puts "  #{"#{member}:".ljust(32)} #{"#{(amount / 3600.0).round(2)}".rjust(6)}"
+          end
         end
       end
     end

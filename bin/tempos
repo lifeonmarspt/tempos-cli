@@ -9,6 +9,11 @@ class ReportCLI < Thor
     Tempos::Commands::Report.new(options).run
   end
 
+  desc "daily", "Show current project daily report"
+  def daily
+    Tempos::Commands::DailyReport.new(options).run
+  end
+
   default_task :show
 end
 
