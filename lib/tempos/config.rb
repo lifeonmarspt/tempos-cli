@@ -4,6 +4,9 @@ module Tempos
   class ProjectDefinitionFileNotFound < StandardError
   end
 
+  class RootDirectoryNotFound < StandardError
+  end
+
   class DirectoryTraversal
     def traverse directory
       Enumerator.new do |y|
@@ -33,7 +36,9 @@ module Tempos
     end
 
     def root
-      options.fetch(:root) { ENV["TEMPOS_ROOT"] }
+      options.fetch(:root) { ENV["TEMPOS_ROOT"] }.tap do |dir|
+        Dir.exists?(dir) or raise RootDirectoryNotFound
+      end
     end
 
     def project_identifier

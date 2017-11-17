@@ -14,13 +14,19 @@ require_relative '../tempos/support/git'
 module Tempos
   module Commands
     class Command
-      attr_accessor :options, :config, :plumbing, :git
+      attr_accessor :options, :config
 
       def initialize options = {}
         self.options = options
         self.config = Tempos::Config.new(options)
-        self.plumbing = Tempos::Plumbing.new(root)
-        self.git = Tempos::Support::Git.new(root)
+      end
+
+      def plumbing
+        @plumbing ||= Tempos::Plumbing.new root
+      end
+
+      def git
+        @git ||= Tempos::Support::Git.new root
       end
 
       def root
@@ -61,6 +67,9 @@ module Tempos
         end
       rescue Tempos::ProjectDefinitionFileNotFound
         $stderr.puts "unable to detect current project: no .tempos file found"
+        exit 1
+      rescue Tempos::RootDirectoryNotFound
+        $stderr.puts "unable to detect root directory: TEMPOS_ROOT does not point to a valid directory"
         exit 1
       rescue Tempos::AlreadyStarted
         $stderr.puts "unable to start tracking time in #{project_identifier}: already started"
