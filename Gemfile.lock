@@ -1,3 +1,10 @@
+PATH
+  remote: .
+  specs:
+    tempos-cli (0.2.1)
+      chronic_duration (~> 0)
+      thor (~> 0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -10,8 +17,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  chronic_duration
-  thor
+  bundler (~> 1.15)
+  tempos-cli!
 
 BUNDLED WITH
    1.15.4
