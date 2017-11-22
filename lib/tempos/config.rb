@@ -36,7 +36,7 @@ module Tempos
     end
 
     def root
-      options.fetch(:root) { ENV["TEMPOS_ROOT"] }.tap do |dir|
+      options.fetch(:root) { ENV.fetch("TEMPOS_ROOT", "") }.tap do |dir|
         Dir.exists?(dir) or raise RootDirectoryNotFound
       end
     end
