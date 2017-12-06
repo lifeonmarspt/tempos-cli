@@ -11,6 +11,7 @@ Commands:
   tempos projects                    # List existing projects
   tempos remove DURATION             # Remove DURATION from the current project
   tempos report                      # Show current project report
+  tempos report daily                # Show current project report, broken down daily
   tempos set-budget AMOUNT CURRENCY  # Set current project budget
   tempos set-deadline DEADLINE       # Set current project deadline
   tempos set-rate AMOUNT CURRENCY    # Set current project rate
