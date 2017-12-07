@@ -26,7 +26,7 @@ module Tempos
       end
 
       def git
-        @git ||= Tempos::Support::Git.new root
+        @git ||= (options[:git] ? Tempos::Support::Git : Tempos::Support::NoGit).new root
       end
 
       def root
