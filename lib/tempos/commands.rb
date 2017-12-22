@@ -83,6 +83,9 @@ module Tempos
       rescue Tempos::Currency::Invalid
         $stderr.puts "unable to set budget: invalid currency"
         exit 1
+      rescue Tempos::Support::Git::Exception => e
+        $stderr.puts "error running git command: #{e.command}"
+        exit 1
       end
     end
 

@@ -3,8 +3,20 @@ require 'shellwords'
 module Tempos
   module Support
     class Git < Struct.new(:root)
+      class Exception < StandardError
+        attr_accessor :command
+
+        def initialize(command)
+          self.command = command
+        end
+      end
+
       def exec *command
-        `#{["git", "-C", root, *command].map { |arg| Shellwords.escape(arg) }.join(" ")}`
+        full_command = ["git", "-C", root, *command].map { |arg| Shellwords.escape(arg) }.join(" ")
+
+        `#{full_command}`.tap do
+          raise Exception.new(full_command) if !$?.success?
+        end
       end
 
       def pull
