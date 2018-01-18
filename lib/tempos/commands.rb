@@ -202,6 +202,38 @@ module Tempos
       end
     end
 
+    class ShowLog < Command
+      def run2
+        format = "%Y-%m-%d %a %H:%M:%S %:z"
+
+        project.log.map do |timestamp, timezone, command, *args, username|
+          [
+            build_time(timestamp, timezone).strftime(format),
+            command,
+            *args.map { |delta| duration_to_s(delta.to_i) }
+          ].join(" ")
+        end.tap { |lines| puts lines }
+      end
+
+      def build_time timestamp, timezone
+        time = Time.at timestamp.to_i
+
+        time.getlocal(
+          TZInfo::Timezone.new(timezone).period_for_utc(time).utc_offset
+        )
+      end
+
+      def duration_to_s duration
+        [
+          (duration/60/60)%60,
+          (duration/60)%60,
+          (duration)%60,
+        ].
+          map { |x| x.to_s.rjust(2, "0") }.
+          join(":")
+      end
+    end
+
     class Report < Command
       def run2
         state = Tempos::Reducer.new(plumbing).reduce(project_identifier)

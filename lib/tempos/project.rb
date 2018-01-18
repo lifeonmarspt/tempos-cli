@@ -66,5 +66,9 @@ module Tempos
     def invoice timestamp, timezone
       self.plumbing.add_metadata_entry identifier, timestamp, timezone, "invoice"
     end
+
+    def log
+      self.plumbing.user_entries identifier, username
+    end
   end
 end

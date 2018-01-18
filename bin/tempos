@@ -100,6 +100,11 @@ class TemposCLI < Thor
     Tempos::Commands::Invoice.new(options).run
   end
 
+  desc "log", "Show human readable log"
+  def log
+    Tempos::Commands::ShowLog.new(options).run
+  end
+
   desc "report", "Show current project report"
   subcommand :report, ReportCLI
 
