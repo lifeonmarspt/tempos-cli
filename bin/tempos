@@ -21,6 +21,7 @@ class TemposCLI < Thor
   class_option :member, default: nil, required: false
   class_option :project, default: nil, required: false
   class_option :timezone, default: nil, required: false
+  class_option :timestamp, default: nil, required: false
   class_option :git, type: :boolean, default: true, required: false
 
   desc "config", "Show current configuration"

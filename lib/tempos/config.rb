@@ -53,6 +53,19 @@ module Tempos
       options.fetch(:timezone) { default_timezone }
     end
 
+    def timestamp
+      ts = options.fetch(:timestamp) { default_timestamp }
+
+      case ts
+      when /\A\d+\z/
+        Integer(ts)
+      when /\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}\z/
+        DateTime.parse(ts).to_time.utc.to_i
+      else
+        raise
+      end
+    end
+
     def find_project_file
       DirectoryTraversal.new.
         traverse(cwd).lazy.
@@ -89,6 +102,10 @@ module Tempos
 
     def default_timezone
       File.readlink("/etc/localtime").split("/").last(2).join("/")
+    end
+
+    def default_timestamp
+      Time.now.utc.to_i
     end
   end
 end

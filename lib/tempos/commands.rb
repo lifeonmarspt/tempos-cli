@@ -45,12 +45,12 @@ module Tempos
         config.timezone
       end
 
-      def project
-        Tempos::Project.new project_identifier, username, plumbing
+      def timestamp
+        config.timestamp
       end
 
-      def timestamp
-        Time.now.utc.to_i
+      def project
+        Tempos::Project.new project_identifier, username, plumbing
       end
 
       def run *args
