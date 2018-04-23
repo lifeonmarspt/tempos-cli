@@ -57,6 +57,8 @@ module Tempos
       ts = options.fetch(:timestamp) { default_timestamp }
 
       case ts
+      when Integer
+        ts
       when /\A\d+\z/
         Integer(ts)
       when /\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}\z/
